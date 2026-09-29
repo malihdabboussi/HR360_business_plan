@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.data
+.env
+.env.local
+.env.production
+src/content/plan-en.ts
+src/content/plan-ar.ts
+next-env.d.ts
+.DS_Store
+*.tsbuildinfo

@@ -1,0 +1,31 @@
+{
+  "name": "hr360-plan-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HR360 business plan sharing app: investor links you can create, revoke and delete.",
+  "scripts": {
+    "embed": "node scripts/embed-plan.mjs",
+    "predev": "npm run embed",
+    "dev": "next dev",
+    "prebuild": "npm run embed",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.650.0",
+    "@aws-sdk/lib-dynamodb": "^3.650.0",
+    "next": "^14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
