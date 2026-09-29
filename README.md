@@ -14,9 +14,19 @@ cp .env.example .env.local     # set ADMIN_PASSWORD and SESSION_SECRET
 npm run dev                    # http://localhost:3000/admin
 ```
 
-Without `LINKS_TABLE` the app stores links in `.data/links.json` (fine locally, not on Amplify).
+Without a database configured the app stores links in `.data/links.json` (fine locally, not on Amplify).
 
-## 2. Create the DynamoDB table (one time)
+## 2. Choose where links are stored (one of two)
+
+### Option A — your existing PostgreSQL RDS (simplest if it is reachable)
+
+1. Create an empty database on the instance, e.g. `business_plan` (SQL: `CREATE DATABASE business_plan;`), and optionally a dedicated user with rights on it only.
+2. Set `DATABASE_URL=postgresql://user:password@your-rds-host:5432/business_plan` (and keep `DATABASE_SSL=true`).
+3. Done: the app creates the table `business_plan_links` itself on first use. Nothing else in the RDS is touched.
+
+Requirement: Amplify Hosting's server code runs outside your VPC, so the RDS instance must be **publicly accessible** and its security group must allow inbound 5432 from the internet (or from the addresses you choose). If your production app on Amplify already talks to this RDS, this is already the case. If the RDS is private, use option B.
+
+### Option B — a DynamoDB table (no server, no VPC, a few cents a month)
 
 ```bash
 aws dynamodb create-table \
@@ -27,7 +37,7 @@ aws dynamodb create-table \
   --region eu-central-1
 ```
 
-Any region works; use the same value for `LINKS_REGION`.
+Set `LINKS_TABLE=hr360-plan-links` and `LINKS_REGION` to the same region, and give the app a compute role (step 4 below).
 
 ## 3. Deploy on AWS Amplify Hosting
 
@@ -39,12 +49,12 @@ Any region works; use the same value for `LINKS_REGION`.
    |---|---|
    | `ADMIN_PASSWORD` | the dashboard password |
    | `SESSION_SECRET` | 32+ random characters (`openssl rand -hex 32`) |
-   | `LINKS_TABLE` | `hr360-plan-links` |
-   | `LINKS_REGION` | the table's region, e.g. `eu-central-1` |
+   | `DATABASE_URL` | option A: the Postgres connection string (`DATABASE_SSL=true`) |
+   | `LINKS_TABLE`, `LINKS_REGION` | option B: the DynamoDB table name and region |
    | `PUBLIC_BASE_URL` | optional, e.g. `https://plan.hrs360.com` (used when building share URLs) |
 
    `amplify.yml` copies these into `.env.production` at build time so the server can read them at runtime.
-4. **Give the app permission to use the table** (App settings → IAM roles → **Compute role**): create or pick a role and attach this policy, replacing account id and region:
+4. **Option B only — give the app permission to use the table** (App settings → IAM roles → **Compute role**): create or pick a role and attach this policy, replacing account id and region:
 
    ```json
    {
@@ -66,4 +76,4 @@ The plan pages live in `content/index.html` (English) and `content/ar.html` (Ara
 
 ## How access control works
 
-Every request to `/p/<token>` looks the token up in the table and serves the plan only when the link exists, is not revoked and has not expired. Revoking or deleting a link takes effect on the next request, with no cache in between. The admin area is protected by a signed, httpOnly session cookie valid for 12 hours.
+Every request to `/p/<token>` looks the token up in the store and serves the plan only when the link exists, is not revoked and has not expired. Revoking or deleting a link takes effect on the next request, with no cache in between. The admin area is protected by a signed, httpOnly session cookie valid for 12 hours.

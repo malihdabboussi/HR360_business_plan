@@ -6,7 +6,7 @@ frontend:
         - npm ci
         # Amplify exposes console environment variables at build time only.
         # Copy the ones the server needs at runtime into .env.production so Next.js SSR can read them.
-        - env | grep -e ADMIN_PASSWORD -e SESSION_SECRET -e LINKS_TABLE -e LINKS_REGION -e PUBLIC_BASE_URL >> .env.production || true
+        - env | grep -e ADMIN_PASSWORD -e SESSION_SECRET -e DATABASE_URL -e DATABASE_SSL -e LINKS_TABLE -e LINKS_REGION -e PUBLIC_BASE_URL >> .env.production || true
     build:
       commands:
         - npm run build
